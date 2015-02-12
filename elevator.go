@@ -1,13 +1,23 @@
+// Package elevator is a control system for a fleet of elevators.
+// The goal of the system is to optimize the total path traveled by the
+// elevator fleet. It uses an implementation of the Dijkstra's algorithm to
+// determine the shortest path and sort the queue.
+// It can queue multiple floor destinations per elevator, and makes no
+// assumption based on direction during pickup - so only one button.
 package elevator
 
 import (
 	"fmt"
 )
 
+// Elevator represents an elevator.
 type Elevator int
 
+// Floor represents a floor or a difference between floors.
 type Floor int
 
+// Direction is an enum value representing the direction of the elevator at any
+// given time.
 type Direction int
 
 const (
@@ -16,11 +26,14 @@ const (
 	Stopped
 )
 
+// State represents the current state of the elevator, including the current
+// floor and the sorted queue of floors it needs to visit next.
 type State struct {
 	Current Floor
 	Queue   []Floor
 }
 
+// Direction returns the direction the elevator is moving next.
 func (s State) Direction() Direction {
 	x := s.Next() - s.Current
 	switch {
@@ -33,6 +46,7 @@ func (s State) Direction() Direction {
 	}
 }
 
+// Next returns the next floor the elevator will visit.
 func (s State) Next() Floor {
 	if len(s.Queue) == 0 {
 		return s.Current
@@ -62,7 +76,7 @@ func (s *State) Total() Floor {
 	var total Floor = 0
 	last := s.Current
 	for _, v := range s.Queue {
-		total += floorDistance(last, v)
+		total += distance(last, v)
 		last = v
 	}
 	return total
@@ -79,7 +93,7 @@ func path(node Floor, visited, unvisited []Floor) (oVisited, oUnvisited []Floor)
 	var pick Floor
 	pickIndex := 0
 	for i, f := range unvisited {
-		if d := floorDistance(node, f); !init || d < min {
+		if d := distance(node, f); !init || d < min {
 			init = true
 			min = d
 			pick = f
@@ -91,6 +105,8 @@ func path(node Floor, visited, unvisited []Floor) (oVisited, oUnvisited []Floor)
 	return path(pick, oVisited, oUnvisited)
 }
 
+// Control controls a fleet of elevators and determines their movements to
+// minimize their total traversed path.
 type Control struct {
 	step  int // count of steps
 	fleet map[Elevator]State
@@ -101,6 +117,7 @@ func NewControl() *Control {
 
 }
 
+// Add adds an elevator at the given initial floor.
 func (c *Control) Add(e Elevator, f Floor) {
 	c.fleet[e] = State{f, []Floor{}}
 }
@@ -109,6 +126,8 @@ func (c Control) Status() map[Elevator]State {
 	return c.fleet
 }
 
+// Update directs and elevator to visit a certain floor, by appending it to its
+// queue and sorting it.
 func (c *Control) Update(e Elevator, f Floor) {
 	s, ok := c.fleet[e]
 	if !ok {
@@ -119,6 +138,9 @@ func (c *Control) Update(e Elevator, f Floor) {
 	c.fleet[e] = s
 }
 
+// Pickup tells the control system that someone needs to be picked up at the
+// specified floor. The control system determines the elevator to execute the
+// pickup.
 func (c *Control) Pickup(f Floor) {
 	if len(c.fleet) == 0 {
 		panic("There is no elevators operating")
@@ -143,6 +165,8 @@ func (c *Control) Pickup(f Floor) {
 	c.Update(pick, f)
 }
 
+// Step ouputs each elevators action for the current step and preps queues for
+// the next step.
 func (c *Control) Step() bool {
 	fmt.Printf("step #%d\n", c.step)
 	moved := false
@@ -168,7 +192,8 @@ func (c *Control) Step() bool {
 	return moved
 }
 
-func floorDistance(a, b Floor) Floor {
+// distance provides the distance in floors between to floors.
+func distance(a, b Floor) Floor {
 	d := a - b
 	if d < 0 {
 		d = -d
