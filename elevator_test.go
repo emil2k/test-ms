@@ -1,6 +1,6 @@
 package elevator
 
-func ExampleControl_Pickup() {
+func ExampleControl_1() {
 	c := NewControl()
 	c.Add(1, 5)
 	c.Add(2, 1)
@@ -12,6 +12,19 @@ func ExampleControl_Pickup() {
 	c.Pickup(4, Down)
 	c.Pickup(9, Up)
 
+	for c.Step() {
+	}
+	// Output:
+	// todo
+}
+
+func ExampleControl_2() {
+	c := NewControl()
+	c.Add(1, 5)
+	c.Update(1, 10)
+	c.Update(1, 8)
+	c.Update(1, 100)
+	c.Update(1, 5)
 	for c.Step() {
 	}
 	// Output:

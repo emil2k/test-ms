@@ -40,6 +40,37 @@ func (s State) Next() Floor {
 	return s.Queue[0]
 }
 
+// Sort sorts the queue to traverse the least floors.
+func (s *State) Sort() {
+	sorted, _ := path(s.Current, []Floor{}, s.Queue)
+	s.Queue = sorted
+}
+
+// path finds the shortest path using Dijkstra's algorithm sorting the visited
+// nodes in the necessary order.
+func path(node Floor, visited, unvisited []Floor) (oVisited, oUnvisited []Floor) {
+	fmt.Println("path recursion :", node, visited, unvisited)
+	if len(unvisited) == 0 {
+		fmt.Println("stop recursion")
+		return visited, unvisited // stop recursion
+	}
+	init := false
+	var min Floor
+	var pick Floor
+	pickIndex := 0
+	for i, f := range unvisited {
+		if d := floorDistance(node, f); !init || d < min {
+			init = true
+			min = d
+			pick = f
+			pickIndex = i
+		}
+	}
+	oVisited = append(visited, pick)
+	oUnvisited = append(unvisited[:pickIndex], unvisited[pickIndex+1:]...)
+	return path(pick, oVisited, oUnvisited)
+}
+
 type Control struct {
 	step  int // count of steps
 	fleet map[Elevator]State
@@ -64,11 +95,12 @@ func (c *Control) Update(e Elevator, f Floor) {
 		panic("Can't update an elevator that does not exist.")
 	}
 	s.Queue = append(s.Queue, f)
-	// TODO sort queue
+	s.Sort()
 	// TODO remove duplicates in queue
 	c.fleet[e] = s
 }
 
+// TODO direction not being used here might need to remove it
 func (c *Control) Pickup(f Floor, d Direction) {
 	if len(c.fleet) == 0 {
 		panic("There is no elevators operating")
@@ -82,11 +114,7 @@ func (c *Control) Pickup(f Floor, d Direction) {
 			break
 		}
 		// Choose closest elevator based on next location.
-		d := f - s.Next()
-		if d < 0 {
-			d = -d // absolute
-		}
-		if pick == nil || d < min {
+		if d := floorDistance(s.Current, s.Next()); pick == nil || d < min {
 			min = d
 			pick = &e
 		}
@@ -119,4 +147,12 @@ func (c *Control) Step() bool {
 	}
 	c.step++
 	return moved
+}
+
+func floorDistance(a, b Floor) Floor {
+	d := a - b
+	if d < 0 {
+		d = -d
+	}
+	return d
 }
