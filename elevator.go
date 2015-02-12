@@ -4,6 +4,10 @@ import (
 	"fmt"
 )
 
+type Elevator int
+
+type Floor int
+
 type Direction int
 
 const (
@@ -11,10 +15,6 @@ const (
 	Down
 	Stopped
 )
-
-type Elevator int
-
-type Floor int
 
 type State struct {
 	Current Floor
@@ -71,9 +71,7 @@ func (s *State) Total() Floor {
 // path finds the shortest path using Dijkstra's algorithm sorting the visited
 // nodes in the necessary order.
 func path(node Floor, visited, unvisited []Floor) (oVisited, oUnvisited []Floor) {
-	fmt.Println("path recursion :", node, visited, unvisited)
 	if len(unvisited) == 0 {
-		fmt.Println("stop recursion")
 		return visited, unvisited // stop recursion
 	}
 	init := false
@@ -121,8 +119,7 @@ func (c *Control) Update(e Elevator, f Floor) {
 	c.fleet[e] = s
 }
 
-// TODO direction not being used here might need to remove it
-func (c *Control) Pickup(f Floor, d Direction) {
+func (c *Control) Pickup(f Floor) {
 	if len(c.fleet) == 0 {
 		panic("There is no elevators operating")
 	}
@@ -132,11 +129,9 @@ func (c *Control) Pickup(f Floor, d Direction) {
 	for e, s := range c.fleet {
 		// Determine which elevator would have the shortest path with
 		// this pickup in its queue.
-		fmt.Println("check for ", e, f, s.Queue)
 		s.Enqueue(f)
 		s.Sort()
 		x := s.Total()
-		fmt.Println("total", x, e)
 		if !init || x < min {
 			init = true
 			min = x

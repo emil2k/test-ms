@@ -9,13 +9,11 @@ func ExampleControl_1() {
 	c.Update(1, 1)
 	c.Update(2, 4)
 
-	c.Pickup(4, Down)
-	c.Pickup(9, Up)
+	c.Pickup(4)
+	c.Pickup(9)
 
 	for c.Step() {
 	}
-	// Output:
-	// todo
 }
 
 func ExampleControl_2() {
@@ -28,6 +26,4 @@ func ExampleControl_2() {
 	c.Update(1, 5)
 	for c.Step() {
 	}
-	// Output:
-	// todo
 }
