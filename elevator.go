@@ -56,6 +56,18 @@ func (s *State) Sort() {
 	s.Queue = sorted
 }
 
+// Total is the total distance in floors that needs to be traveled to satisfy
+// current queue.
+func (s *State) Total() Floor {
+	var total Floor = 0
+	last := s.Current
+	for _, v := range s.Queue {
+		total += floorDistance(last, v)
+		last = v
+	}
+	return total
+}
+
 // path finds the shortest path using Dijkstra's algorithm sorting the visited
 // nodes in the necessary order.
 func path(node Floor, visited, unvisited []Floor) (oVisited, oUnvisited []Floor) {
@@ -104,7 +116,6 @@ func (c *Control) Update(e Elevator, f Floor) {
 	if !ok {
 		panic("Can't update an elevator that does not exist.")
 	}
-	// TODO remove duplicates in queue, with add only if not duplicate
 	s.Enqueue(f)
 	s.Sort()
 	c.fleet[e] = s
@@ -115,23 +126,26 @@ func (c *Control) Pickup(f Floor, d Direction) {
 	if len(c.fleet) == 0 {
 		panic("There is no elevators operating")
 	}
+	init := false
 	var min Floor // distance in floors
-	var pick *Elevator = nil
+	var pick Elevator
 	for e, s := range c.fleet {
-		// Elevator on the same floor.
-		if s.Current == f {
-			pick = &e
-			break
-		}
-		// Choose closest elevator based on next location.
-		if d := floorDistance(s.Current, s.Next()); pick == nil || d < min {
-			min = d
-			pick = &e
+		// Determine which elevator would have the shortest path with
+		// this pickup in its queue.
+		fmt.Println("check for ", e, f, s.Queue)
+		s.Enqueue(f)
+		s.Sort()
+		x := s.Total()
+		fmt.Println("total", x, e)
+		if !init || x < min {
+			init = true
+			min = x
+			pick = e
 		}
 	}
 	// Order the picked elevator to go to the pickup.
-	fmt.Printf("elevator %d to pickup on floor %d\n", *pick, f)
-	c.Update(*pick, f)
+	fmt.Printf("elevator %d to pickup on floor %d\n", pick, f)
+	c.Update(pick, f)
 }
 
 func (c *Control) Step() bool {
