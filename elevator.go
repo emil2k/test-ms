@@ -81,8 +81,8 @@ func (c *Control) Pickup(f Floor, d Direction) {
 			pick = &e
 			break
 		}
-		// Choose closest elevator.
-		d := f - s.Current
+		// Choose closest elevator based on next location.
+		d := f - s.Next()
 		if d < 0 {
 			d = -d // absolute
 		}
@@ -92,10 +92,11 @@ func (c *Control) Pickup(f Floor, d Direction) {
 		}
 	}
 	// Order the picked elevator to go to the pickup.
+	fmt.Printf("elevator %d to pickup on floor %d\n", *pick, f)
 	c.Update(*pick, f)
 }
 
-func (c Control) Step() bool {
+func (c *Control) Step() bool {
 	fmt.Printf("step #%d\n", c.step)
 	moved := false
 	for e, s := range c.fleet {
@@ -109,9 +110,11 @@ func (c Control) Step() bool {
 		case Stopped:
 			fmt.Printf("\televator %d is stopped on floor %d\n", e, s.Current)
 		}
-		// Unqueue the stop.
+		// Move that elevator.
 		if len(s.Queue) > 0 {
+			s.Current = s.Queue[0]
 			s.Queue = s.Queue[1:]
+			c.fleet[e] = s
 		}
 	}
 	c.step++
