@@ -24,6 +24,7 @@ func ExampleControl_2() {
 	c.Update(1, 10)
 	c.Update(1, 8)
 	c.Update(1, 100)
+	c.Update(1, 100) // test duplicates
 	c.Update(1, 5)
 	for c.Step() {
 	}

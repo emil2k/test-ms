@@ -40,6 +40,16 @@ func (s State) Next() Floor {
 	return s.Queue[0]
 }
 
+// Enqueue appends a floor to the end of the queue if it is not already present.
+func (s *State) Enqueue(f Floor) {
+	for _, v := range s.Queue {
+		if v == f {
+			return
+		}
+	}
+	s.Queue = append(s.Queue, f)
+}
+
 // Sort sorts the queue to traverse the least floors.
 func (s *State) Sort() {
 	sorted, _ := path(s.Current, []Floor{}, s.Queue)
@@ -94,9 +104,9 @@ func (c *Control) Update(e Elevator, f Floor) {
 	if !ok {
 		panic("Can't update an elevator that does not exist.")
 	}
-	s.Queue = append(s.Queue, f)
+	// TODO remove duplicates in queue, with add only if not duplicate
+	s.Enqueue(f)
 	s.Sort()
-	// TODO remove duplicates in queue
 	c.fleet[e] = s
 }
 
